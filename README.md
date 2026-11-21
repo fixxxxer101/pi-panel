@@ -18,9 +18,10 @@ Four tiles, refreshed every second:
   clock seen this session). The tile label says which one it is.
 - **RAM USED** — % and GB from `/proc/meminfo`
 
-Header shows the hostname and the time; the ✕ in the corner closes the
-app (reopen it from the desktop's Pi Panel shortcut, or it returns at
-the next boot).
+The header carries the title "Pi 5 Panel By: Trinity Nexus", the date
+and time (US format, 12-hour clock), and the ✕ in the corner closes
+the app (reopen it from the desktop's Pi Panel shortcut, or it returns
+at the next boot).
 
 ## Buttons
 

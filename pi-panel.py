@@ -30,7 +30,6 @@ import glob
 import os
 import re
 import shutil
-import socket
 import subprocess
 import sys
 import time
@@ -291,18 +290,21 @@ class App:
         main.place(x=0, y=0, relwidth=1, relheight=1)
         self.main = main
 
-        # header: hostname left, clock + close right
-        header = tk.Frame(main, bg=BG)
+        # header: title left, date/time + close right. The bar height is
+        # locked at 32px (pack_propagate off): the bigger close glyph
+        # fits inside it without growing the bar.
+        header = tk.Frame(main, bg=BG, height=32)
         header.pack(fill="x", padx=10, pady=(6, 0))
-        tk.Label(header, text=socket.gethostname(), bg=BG, fg=MUTED,
-                 font=(FONT, 12, "bold")).pack(side="left")
+        header.pack_propagate(False)
+        tk.Label(header, text="Pi 5 Panel By: Trinity Nexus", bg=BG,
+                 fg=MUTED, font=(FONT, 11, "bold")).pack(side="left")
         tk.Button(header, text="✕", bg=BG, fg=MUTED, activebackground=BG,
                   activeforeground=TEXT, bd=0, highlightthickness=0,
-                  font=(FONT, 13, "bold"),
+                  font=(FONT, 19, "bold"), padx=6, pady=0,
                   command=root.destroy).pack(side="right")
         self.clock = tk.Label(header, text="", bg=BG, fg=MUTED,
-                              font=(FONT, 12, "bold"))
-        self.clock.pack(side="right", padx=(0, 8))
+                              font=(FONT, 10, "bold"), anchor="e")
+        self.clock.pack(side="right", padx=(0, 6))
 
         # power buttons FIRST (packed to the bottom): pack gives space in
         # call order, so the buttons can never be starved by the grid
@@ -385,7 +387,7 @@ class App:
         self.root.after(REFRESH_MS, self.tick)
 
     def update_stats(self):
-        self.clock.config(text=time.strftime("%H:%M"))
+        self.clock.config(text=time.strftime("%m/%d/%Y  %-I:%M %p"))
         pct, self.cpu_prev = cpu_percent(self.cpu_prev)
         ghz = read_cpu_clock_ghz()
         if pct is None:
