@@ -298,13 +298,21 @@ class App:
         header.pack_propagate(False)
         tk.Label(header, text="Pi 5 Panel By: Trinity Nexus", bg=BG,
                  fg=MUTED, font=(FONT, 11, "bold")).pack(side="left")
-        tk.Button(header, text="✕", bg=BG, fg=MUTED, activebackground=BG,
-                  activeforeground=TEXT, bd=0, highlightthickness=0,
-                  font=(FONT, 19, "bold"), padx=6, pady=0,
-                  command=root.destroy).pack(side="right")
+        close_btn = tk.Button(header, text="✕", bg=BG, fg=MUTED,
+                              activebackground=BG, activeforeground=TEXT,
+                              bd=0, highlightthickness=0,
+                              font=(FONT, 19, "bold"), padx=3, pady=0,
+                              width=2, command=root.destroy)
+        close_btn.pack(side="right")
+        # Touch fix: fire on finger-DOWN, not on release. A resistive
+        # panel drifts during a press-and-hold, so the release lands
+        # off this small target and a normal click reads as cancelled
+        # (verified live: mouse click worked, touch did nothing).
+        close_btn.bind("<ButtonPress-1>",
+                       lambda e: root.after(50, root.destroy))
         self.clock = tk.Label(header, text="", bg=BG, fg=MUTED,
                               font=(FONT, 10, "bold"), anchor="e")
-        self.clock.pack(side="right", padx=(0, 6))
+        self.clock.pack(side="right", padx=(0, 4))
 
         # power buttons FIRST (packed to the bottom): pack gives space in
         # call order, so the buttons can never be starved by the grid
