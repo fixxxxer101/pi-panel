@@ -264,6 +264,21 @@ class Tile:
             self.fill.config(bg=color)
 
 
+def press_button(parent, command, **kw):
+    """A button that fires on PRESS, not on release.
+
+    This panel's resistive touch drifts during a press-and-hold, so a
+    release can land off the button and a normal click reads as
+    cancelled (verified live: mouse clicks worked, touch did nothing).
+    Every Pi Panel button therefore triggers on ButtonPress-1 and has
+    no release command at all - exactly one trigger path.
+    """
+    import tkinter as tk
+    b = tk.Button(parent, **kw)
+    b.bind("<ButtonPress-1>", lambda e: command())
+    return b
+
+
 class App:
     def __init__(self, root):
         import tkinter as tk
@@ -298,18 +313,13 @@ class App:
         header.pack_propagate(False)
         tk.Label(header, text="Pi 5 Panel By: Trinity Nexus", bg=BG,
                  fg=MUTED, font=(FONT, 11, "bold")).pack(side="left")
-        close_btn = tk.Button(header, text="✕", bg=BG, fg=MUTED,
-                              activebackground=BG, activeforeground=TEXT,
-                              bd=0, highlightthickness=0,
-                              font=(FONT, 19, "bold"), padx=3, pady=0,
-                              width=2, command=root.destroy)
-        close_btn.pack(side="right")
-        # Touch fix: fire on finger-DOWN, not on release. A resistive
-        # panel drifts during a press-and-hold, so the release lands
-        # off this small target and a normal click reads as cancelled
-        # (verified live: mouse click worked, touch did nothing).
-        close_btn.bind("<ButtonPress-1>",
-                       lambda e: root.after(50, root.destroy))
+        # the destroy is deferred 50ms so the press event finishes
+        # dispatching before the window goes away
+        press_button(header, lambda: root.after(50, root.destroy),
+                     text="✕", bg=BG, fg=MUTED, activebackground=BG,
+                     activeforeground=TEXT, bd=0, highlightthickness=0,
+                     font=(FONT, 19, "bold"), padx=3, pady=0,
+                     width=2).pack(side="right")
         self.clock = tk.Label(header, text="", bg=BG, fg=MUTED,
                               font=(FONT, 10, "bold"), anchor="e")
         self.clock.pack(side="right", padx=(0, 4))
@@ -318,16 +328,18 @@ class App:
         # call order, so the buttons can never be starved by the grid
         row = tk.Frame(main, bg=BG)
         row.pack(side="bottom", fill="x", padx=10, pady=(2, 10))
-        tk.Button(row, text="REBOOT", bg="#2a3542", fg=TEXT,
-                  activebackground="#3a4a5c", activeforeground=TEXT,
-                  bd=0, highlightthickness=0, font=(FONT, 15, "bold"),
-                  height=1, command=lambda: self.ask("reboot")
-                  ).pack(side="left", fill="x", expand=True, padx=(0, 5))
-        tk.Button(row, text="SHUTDOWN", bg="#5a2622", fg=TEXT,
-                  activebackground="#74322c", activeforeground=TEXT,
-                  bd=0, highlightthickness=0, font=(FONT, 15, "bold"),
-                  height=1, command=lambda: self.ask("poweroff")
-                  ).pack(side="left", fill="x", expand=True, padx=(5, 0))
+        press_button(row, lambda: self.ask("reboot"),
+                     text="REBOOT", bg="#2a3542", fg=TEXT,
+                     activebackground="#3a4a5c", activeforeground=TEXT,
+                     bd=0, highlightthickness=0, font=(FONT, 15, "bold"),
+                     height=1).pack(side="left", fill="x", expand=True,
+                                    padx=(0, 5))
+        press_button(row, lambda: self.ask("poweroff"),
+                     text="SHUTDOWN", bg="#5a2622", fg=TEXT,
+                     activebackground="#74322c", activeforeground=TEXT,
+                     bd=0, highlightthickness=0, font=(FONT, 15, "bold"),
+                     height=1).pack(side="left", fill="x", expand=True,
+                                    padx=(5, 0))
 
         # stat tiles 2x2 fill whatever height is left
         grid = tk.Frame(main, bg=BG)
@@ -352,17 +364,20 @@ class App:
         self.confirm_msg.pack(pady=(0, 14))
         btns = tk.Frame(conf, bg=BG)
         btns.pack()
-        self.confirm_yes = tk.Button(btns, text="YES", bg=RED, fg="white",
-                                     activebackground="#c23e35",
-                                     activeforeground="white", bd=0,
-                                     highlightthickness=0,
-                                     font=(FONT, 18, "bold"), width=9,
-                                     height=2, command=self.do_power)
+        self.confirm_yes = press_button(btns, self.do_power,
+                                        text="YES", bg=RED, fg="white",
+                                        activebackground="#c23e35",
+                                        activeforeground="white", bd=0,
+                                        highlightthickness=0,
+                                        font=(FONT, 18, "bold"), width=9,
+                                        height=2)
         self.confirm_yes.pack(side="left", padx=8)
-        tk.Button(btns, text="CANCEL", bg="#2a3542", fg=TEXT,
-                  activebackground="#3a4a5c", activeforeground=TEXT, bd=0,
-                  highlightthickness=0, font=(FONT, 18, "bold"), width=9,
-                  height=2, command=self.hide_confirm).pack(side="left", padx=8)
+        press_button(btns, self.hide_confirm,
+                     text="CANCEL", bg="#2a3542", fg=TEXT,
+                     activebackground="#3a4a5c", activeforeground=TEXT,
+                     bd=0, highlightthickness=0,
+                     font=(FONT, 18, "bold"), width=9,
+                     height=2).pack(side="left", padx=8)
 
         self.reposition(force=True)
         self.tick()
